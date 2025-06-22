@@ -1,9 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"taskapi/internal/logger"
+)
+
+var (
+	log = logger.LoggerInit()
 )
 
 func main() {
-	fmt.Println("Hello, World!")
+	log.Info("Starting application")
 }
