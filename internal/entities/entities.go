@@ -1,7 +1,5 @@
 package entities
 
-import "time"
-
 const (
 	WIP     = "WIP"     // Work in progress
 	DONE    = "DONE"    // Done
@@ -19,7 +17,7 @@ type EntityInfo struct {
 type TaskStatus struct {
 	TaskInfo   *EntityInfo
 	WorkStatus string
-	CreatedAt  time.Time
+	CreatedAt  string
 	Duration   string
 	Completed  bool
 }

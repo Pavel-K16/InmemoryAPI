@@ -1,136 +1,63 @@
 package entities
 
 import (
-	"fmt"
 	"sync"
-	"taskapi/internal/logger"
-	"time"
 )
+
+type taskCache struct {
+	taskCache map[string]Task
+	mu        *sync.RWMutex
+}
 
 var (
-	taskCache = make(map[string]Task)
-	log       = logger.LoggerInit()
-	mu        = new(sync.RWMutex)
+	// сделать структуру для кеша и объявить методы с мьютексами
+	TasksCache = taskCache{
+		taskCache: make(map[string]Task),
+		mu:        new(sync.RWMutex),
+	}
 )
 
-func Create(info *EntityInfo) (Task, error) {
-	mu.Lock()
-	defer mu.Unlock()
+func (tC *taskCache) Set(key string, task Task) Task {
+	tC.mu.Lock()
+	defer tC.mu.Unlock()
 
-	if info == nil || info.ID == "" {
-		log.Errorf("Invalid task info")
+	tC.taskCache[key] = task
 
-		return nil, fmt.Errorf("invalid task info")
-	}
-
-	key := info.ID
-
-	log.Tracef("Setting task %s in cache", key)
-
-	if _, ok := taskCache[key]; ok {
-		log.Warningf("Task %s already exists in cache", key)
-
-		return nil, fmt.Errorf("task %s already exists in cache", key)
-	}
-
-	task := TaskStatus{
-		TaskInfo:   info,
-		WorkStatus: STARTED,
-		CreatedAt:  time.Now(),
-		Completed:  false,
-		Duration:   "0m 0s",
-	}
-
-	// duration := end.Sub(start)
-
-	// // Получаем минуты и секунды
-	// minutes := int(duration.Minutes())
-	// seconds := int(duration.Seconds()) % 60
-
-	// fmt.Printf("Время выполнения: %d мин %d сек\n", minutes, seconds)
-
-	taskCache[key] = task
-
-	return &task, nil
+	return task
 }
 
-func Get(info *EntityInfo) (*Task, error) {
-	mu.RLock()
-	defer mu.RUnlock()
+func (tC *taskCache) Get(key string) Task {
+	tC.mu.RLock()
+	defer tC.mu.RUnlock()
 
-	var task Task
+	task := tC.taskCache[key]
 
-	if info == nil || info.ID == "" {
-		log.Errorf("Invalid task info")
-
-		return nil, fmt.Errorf("invalid task info")
-	}
-
-	key := info.ID
-
-	log.Tracef("Getting task %s from cache", key)
-
-	if _, ok := taskCache[key]; !ok {
-		log.Warningf("Task %s not found in cache", key)
-
-		return nil, fmt.Errorf("task %s not found in cache", key)
-	}
-
-	task = taskCache[key]
-
-	log.Tracef("Task %s added to cache", key)
-
-	return &task, nil
+	return task
 }
 
-func Delete(info *EntityInfo) (*Task, error) {
-	mu.Lock()
-	defer mu.Unlock()
+func (tC *taskCache) Delete(key string) Task {
+	tC.mu.Lock()
+	defer tC.mu.Unlock()
 
-	if info == nil || info.ID == "" {
-		log.Errorf("Invalid task info")
+	task := tC.taskCache[key]
 
-		return nil, fmt.Errorf("invalid task info")
-	}
+	delete(tC.taskCache, key)
 
-	key := info.ID
-
-	log.Tracef("Deleting task %s from cache", key)
-
-	var task Task
-
-	if _, ok := taskCache[key]; !ok {
-		log.Warningf("Task %s not found in cache", key)
-
-		return nil, fmt.Errorf("task %s not found in cache", key)
-	}
-
-	task = taskCache[key]
-
-	delete(taskCache, key)
-
-	log.Tracef("Task %s deleted from cache", key)
-
-	return &task, nil
+	return task
 }
 
-func GetAll() ([]Task, error) {
-	log.Tracef("Getting all tasks from cache")
+func (tC *taskCache) IsExists(key string) bool {
+	tC.mu.RLock()
+	defer tC.mu.RUnlock()
 
-	mu.RLock()
-	defer mu.RUnlock()
+	_, ok := tC.taskCache[key]
 
-	var tasks []Task
+	return ok
+}
 
-	if len(taskCache) == 0 {
-		log.Warningf("No tasks found in cache")
+func (tC *taskCache) GetAll() map[string]Task {
+	tC.mu.RLock()
+	defer tC.mu.RUnlock()
 
-		return nil, fmt.Errorf("no tasks found in cache")
-	}
-
-	for _, task := range taskCache {
-		tasks = append(tasks, task)
-	}
-
-	return tasks, nil
+	return tC.taskCache
 }
