@@ -1,2 +1,2 @@
-00:35:11 [31mWARNING[0m crud.go:28 Task 1 already exists in cache
-00:35:11 [31mERROR[0m handlers.go:32 Handler: CreateTask: tas	k 1 already exists in cache
+12:28:35 [36mINFO[0m crud.go:58 Task 0 not found in cache
+asksW12:28:47 [36mINFO[0m app.go:102 App stopped gracefully

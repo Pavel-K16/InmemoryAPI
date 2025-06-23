@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"sync"
 	e "taskapi/internal/entities"
 	"taskapi/internal/logger"
@@ -16,7 +18,16 @@ var (
 func CacheTasksWatcher(ctx context.Context) {
 	log.Infof("Service CacheTasksWatcher is running...")
 
-	ticker := time.NewTicker(3 * time.Second)
+	interval := os.Getenv("SYNC_TASKSTATUS_INTERVAL_SEC")
+	intervalInt, err := strconv.Atoi(interval)
+	if err != nil {
+		log.Errorf("SYNC_TASKSTATUS_INTERVAL_SEC is not a number: %v", err)
+		log.Infof("Set default value sec 3")
+
+		intervalInt = 3
+	}
+
+	ticker := time.NewTicker(time.Duration(intervalInt) * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -67,4 +78,5 @@ func checkTasksStatus(cache *map[string]e.Task, mu *sync.RWMutex) {
 		e.TasksCache.UpdateIntoWatcher(id, taskStatus)
 	}
 
+	log.Tracef("sync tasks duration done")
 }

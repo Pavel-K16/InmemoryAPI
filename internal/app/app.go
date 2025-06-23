@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"taskapi/internal/logger"
 	"taskapi/internal/scr/tasks"
 	"taskapi/internal/services"
+	"taskapi/internal/utils"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -35,11 +38,30 @@ func newRouter() *mux.Router {
 func newServer() (*http.Server, error) {
 	router := newRouter()
 
-	//port := envs["LBAPI_LISTEN_PORT"]
+	envs := utils.GetEnvs()
+
+	if err := utils.SetEnvs(envs); err != nil {
+		return nil, err
+	}
+
+	port := envs["TASKAPI_LISTEN_PORT"]
+	readTimeout := envs["TASKAPI_HTTP_READ_TIMEOUT_SEC"]
+	writeTimeout := envs["TASKAPI_HTTP_WRITE_TIMEOUT_SEC"]
+
+	readTimeoutSec, err := strconv.Atoi(readTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	writeTimeoutSec, err := strconv.Atoi(writeTimeout)
+	if err != nil {
+		return nil, err
+	}
+
 	srv := &http.Server{
-		Addr:         ":" + "8080",
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		Addr:         ":" + port,
+		ReadTimeout:  time.Duration(readTimeoutSec) * time.Second,
+		WriteTimeout: time.Duration(writeTimeoutSec) * time.Second,
 		Handler:      router,
 	}
 
@@ -47,32 +69,37 @@ func newServer() (*http.Server, error) {
 }
 
 func Run(ctx context.Context) error {
-	log.Infof("App is running... on port %s", ":8080")
-
 	srv, err := newServer()
 	if err != nil {
 		return err
 	}
 
+	port := os.Getenv("TASKAPI_LISTEN_PORT")
+
+	log.Infof("App is running... on port :%s", port)
+
 	runPeriodicJobs(ctx)
-	go func() {
-		<-ctx.Done()
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		err = srv.Shutdown(shutdownCtx)
-		if err != nil {
-			log.Errorf("Graceful shutdown failed: %s", err.Error())
+	go func() error {
+		err := srv.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("can't start http server: %s", err)
 		}
 
-		log.Infof("App stopped gracefully")
+		return nil
 	}()
 
-	err = srv.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return fmt.Errorf("can't start http server: %s", err)
+	<-ctx.Done()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = srv.Shutdown(shutdownCtx)
+	if err != nil {
+		log.Errorf("Graceful shutdown failed: %s", err.Error())
 	}
+
+	log.Infof("App stopped gracefully")
 
 	return nil
 }
