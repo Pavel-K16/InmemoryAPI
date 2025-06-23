@@ -1,1 +1,2 @@
-17:15:02 [36mINFO[0m taskapi.go:13 Starting application
+00:35:11 [31mWARNING[0m crud.go:28 Task 1 already exists in cache
+00:35:11 [31mERROR[0m handlers.go:32 Handler: CreateTask: tas	k 1 already exists in cache

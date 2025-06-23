@@ -27,7 +27,7 @@ func Create(info *e.EntityInfo) (e.Task, error) {
 	if e.TasksCache.IsExists(key) {
 		log.Warningf("Task %s already exists in cache", key)
 
-		return nil, fmt.Errorf("tas	k %s already exists in cache", key)
+		return nil, fmt.Errorf("task %s already exists in cache", key)
 	}
 
 	task := e.TaskStatus{
@@ -37,14 +37,6 @@ func Create(info *e.EntityInfo) (e.Task, error) {
 		Completed:  false,
 		Duration:   "0m 0s",
 	}
-
-	// duration := end.Sub(start)
-
-	// // Получаем минуты и секунды
-	// minutes := int(duration.Minutes())
-	// seconds := int(duration.Seconds()) % 60
-
-	// fmt.Printf("Время выполнения: %d мин %d сек\n", minutes, seconds)
 
 	e.TasksCache.Set(key, task)
 
@@ -112,7 +104,11 @@ func GetAll() ([]e.Task, error) {
 	}
 
 	for _, task := range tC {
-		tasks = append(tasks, task)
+		t, ok := task.(e.TaskStatus)
+
+		if ok && t.TaskInfo != nil {
+			tasks = append(tasks, task)
+		}
 	}
 
 	return tasks, nil

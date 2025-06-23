@@ -29,7 +29,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := Create(info)
 	if err != nil {
-		log.Errorf("Handler: CreateTask: %v", err)
+		log.Warningf("Handler: CreateTask: %v", err)
 		http.Error(w, err.Error(), http.StatusConflict)
 
 		return
@@ -159,7 +159,7 @@ func GetAllTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasksStatus := make([]e.TaskStatus, len(tasks))
+	tasksStatus := make([]e.TaskStatus, 0)
 	for _, task := range tasks {
 		taskStatus, ok := task.(e.TaskStatus)
 		if !ok {
@@ -169,7 +169,10 @@ func GetAllTasks(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
-		tasksStatus = append(tasksStatus, taskStatus)
+
+		if taskStatus.TaskInfo != nil {
+			tasksStatus = append(tasksStatus, taskStatus)
+		}
 	}
 
 	data, err := json.Marshal(tasksStatus)

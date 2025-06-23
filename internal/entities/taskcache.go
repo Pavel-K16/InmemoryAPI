@@ -61,3 +61,11 @@ func (tC *taskCache) GetAll() map[string]Task {
 
 	return tC.taskCache
 }
+
+func (tC *taskCache) GetCurrState() (*map[string]Task, *sync.RWMutex) {
+	return &tC.taskCache, tC.mu
+}
+
+func (tC *taskCache) UpdateIntoWatcher(id string, task Task) { // deprecated 
+	tC.taskCache[id] = task
+}

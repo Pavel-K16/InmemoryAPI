@@ -1,6 +1,10 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
 	"taskapi/internal/app"
 	"taskapi/internal/logger"
 )
@@ -10,6 +14,11 @@ var (
 )
 
 func main() {
-	log.Info("Starting application")
-	app.Run()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	if err := app.Run(ctx); err != nil {
+		log.Errorf("Error starting server: %s", err)
+
+		stop()
+	}
 }
