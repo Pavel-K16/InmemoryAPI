@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  taskapi:
+    build: .
+    
+    ports:
+      - "8080:8080"
+    
+    environment:
+      - TASKAPI_LISTEN_PORT=8080
+      - TASKAPI_HTTP_READ_TIMEOUT_SEC=15
+      - TASKAPI_HTTP_WRITE_TIMEOUT_SEC=15
+      - SYNC_TASKSTATUS_INTERVAL_SEC=3
+    
+    volumes:
+      - ./logs:/app/logs
+    
+    restart: unless-stopped

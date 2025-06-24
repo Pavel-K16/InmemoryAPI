@@ -1,2 +1,1 @@
-12:28:35 [36mINFO[0m crud.go:58 Task 0 not found in cache
-asksW12:28:47 [36mINFO[0m app.go:102 App stopped gracefully
+10:48:24 [36mINFO[0m taskCacheWatcher.go:19 Service CacheTasksW10:48:27 [36mINFO[0m app.go:102 App stopped gracefully
